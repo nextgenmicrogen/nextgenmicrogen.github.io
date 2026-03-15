@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>News | NMG-VRG</title>
+  <meta name="description" content="Latest news, announcements, workshops, and updates from NMG-VRG." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" href="logo.png">
+</head>
+<body>
+  <div class="site-bg">
+    <div class="grid-glow"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <header class="header glass">
+    <div class="container nav-wrap">
+      <a href="index.html" class="brand">
+        <img src="logo.png" alt="NMG-VRG logo" class="brand-logo" />
+        <div>
+          <div class="brand-title">NMG-VRG</div>
+          <div class="brand-subtitle">Virtual | Global | Collaborative</div>
+        </div>
+      </a>
+      <button class="menu-toggle" id="menuToggle" aria-label="Open navigation">☰</button>
+      <nav class="nav" id="navMenu">
+        <a href="index.html">Home</a>
+        <a href="publications.html">Publications</a>
+        <a href="projects.html">Projects</a>
+        <a href="news.html" class="active">News</a>
+        <a href="faq.html">FAQ</a>
+        <a href="index.html#membership">Membership</a>
+        <a href="index.html#contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-main">
+    <section class="page-hero container reveal">
+      <span class="eyebrow">News & Updates</span>
+      <h1>Latest announcements from NMG-VRG</h1>
+      <p class="lead">
+        Browse community updates, membership calls, workshops, journal clubs, and research-related announcements.
+      </p>
+    </section>
+
+    <section class="section container reveal">
+      <div class="news-search-bar card premium-card">
+        <div class="form-grid news-search-grid">
+          <div>
+            <label for="newsSearch">Search news</label>
+            <input
+              id="newsSearch"
+              type="text"
+              placeholder="Search by title, keyword, category, or summary"
+            />
+          </div>
+          <div>
+            <label for="newsCategory">Filter by category</label>
+            <select id="newsCategory">
+              <option value="all">All categories</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section container reveal">
+      <div class="section-heading left">
+        <span class="eyebrow">Results</span>
+        <h2 id="resultsTitle">All news</h2>
+      </div>
+
+      <div id="newsResults" class="grid card-grid three"></div>
+      <p id="newsEmpty" class="small-note" style="display:none;">No news items matched your search.</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <p>© NextGen Microbial Genomics Virtual Research Group (NMG-VRG)</p>
+      <p>Virtual | Global | Collaborative</p>
+    </div>
+  </footer>
+
+  <script src="news-data.js"></script>
+  <script src="script.js"></script>
+  <script>
+    const newsResults = document.getElementById("newsResults");
+    const newsSearch = document.getElementById("newsSearch");
+    const newsCategory = document.getElementById("newsCategory");
+    const newsEmpty = document.getElementById("newsEmpty");
+    const resultsTitle = document.getElementById("resultsTitle");
+
+    const items = Array.isArray(window.newsItems) ? window.newsItems : [];
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-GB", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+    }
+
+    function populateCategories() {
+      const categories = [...new Set(items.map(item => item.category).filter(Boolean))];
+      categories.sort().forEach(category => {
+        const option = document.createElement("option");
+        option.value = category;
+        option.textContent = category;
+        newsCategory.appendChild(option);
+      });
+    }
+
+    function matchesSearch(item, query) {
+      const haystack = [
+        item.title,
+        item.category,
+        item.summary,
+        ...(item.keywords || [])
+      ].join(" ").toLowerCase();
+
+      return haystack.includes(query.toLowerCase());
+    }
+
+    function renderNews() {
+      const query = newsSearch.value.trim().toLowerCase();
+      const category = newsCategory.value;
+
+      let filtered = items.filter(item => {
+        const passesQuery = query ? matchesSearch(item, query) : true;
+        const passesCategory = category === "all" ? true : item.category === category;
+        return passesQuery && passesCategory;
+      });
+
+      filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      newsResults.innerHTML = "";
+
+      if (!filtered.length) {
+        newsEmpty.style.display = "block";
+        resultsTitle.textContent = "No matching news";
+        return;
+      }
+
+      newsEmpty.style.display = "none";
+      resultsTitle.textContent = query || category !== "all" ? "Filtered news" : "All news";
+
+      filtered.forEach(item => {
+        const article = document.createElement("article");
+        article.className = "card premium-card hover-lift strong-hover news-card";
+        article.innerHTML = `
+          <span class="card-tag">${item.category || "News"}</span>
+          <h3>${item.title}</h3>
+          <p class="news-date">${formatDate(item.date)}</p>
+          <p>${item.summary}</p>
+          <a href="${item.url}" class="btn btn-secondary news-read-btn">Read more</a>
+        `;
+        newsResults.appendChild(article);
+      });
+    }
+
+    populateCategories();
+    renderNews();
+
+    newsSearch.addEventListener("input", renderNews);
+    newsCategory.addEventListener("change", renderNews);
+  </script>
+</body>
+</html>
